@@ -19,7 +19,7 @@ st.title("📰 Pencarian Berita Online")
 # ==== Ambil keyword populer dari judul ====
 semua_kata = []
 for b in berita:
-    semua_kata += b["judul"].lower().split()
+    semua_kata += b["title"].lower().split()
 
 top_kata = [k for k, _ in Counter(semua_kata).most_common(10) if len(k) > 3]
 
@@ -30,11 +30,11 @@ keyword = keyword_input if keyword_input else saran
 
 # ==== Filter berita berdasarkan keyword ====
 if keyword:
-    hasil = [b for b in berita if keyword in b["judul"].lower() or keyword in b["isi"].lower()]
+    hasil = [b for b in berita if keyword in b["title"].lower() or keyword in b["isi"].lower()]
     st.markdown(f"### 🔎 {len(hasil)} hasil ditemukan untuk: `{keyword}`")
 
     for b in hasil:
-        st.subheader(b["judul"])
+        st.subheader(b["title"])
         st.write(b["isi"])
         if "link" in b:
             st.markdown(f"[Baca Selengkapnya]({b['link']})")
