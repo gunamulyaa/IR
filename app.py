@@ -9,7 +9,7 @@ DATA_PATH = os.path.join("Data", "combined_articles.json")
 # === Fungsi buat gambar Unsplash ===
 def generate_unsplash_url(title):
     keyword = urllib.parse.quote(" ".join(title.lower().split()[:2]))
-    return f"https://source.unsplash.com/800x400/?{keyword},news"
+    return f"https://source.unsplash.com/800x400/?{keyword}"
 
 # === Fungsi potong isi ===
 def potong_isi(teks, max_kata=40):
