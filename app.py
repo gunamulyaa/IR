@@ -42,16 +42,23 @@ def generate_unsplash_url(title):
     return f"https://source.unsplash.com/800x400/?{keyword},news"
 
 # ==== Filter berita berdasarkan keyword ====
-for b in hasil:
-    st.subheader(b["title"])
+if keyword:
+    hasil = [b for b in berita if keyword in b["title"].lower() or keyword in b["content"].lower()]
+    st.markdown(f"### 🔎 {len(hasil)} hasil ditemukan untuk: `{keyword}`")
 
-    # Gambar dari Unsplash berdasarkan isi judul
-    img_url = generate_unsplash_url(b["title"])
-    st.image(img_url, use_column_width=True)
+    for b in hasil:
+        st.subheader(b["title"])
 
-    st.write(potong_isi(b["content"]))
+        # Gambar dari Unsplash berdasarkan isi judul
+        img_url = generate_unsplash_url(b["title"])
+        st.image(img_url, use_column_width=True)
 
-    if "link" in b:
-        st.markdown(f"[📖 Baca Selengkapnya]({b['link']})")
+        st.write(potong_isi(b["content"], max_kata=50))
 
-    st.markdown("---")
+        if "link" in b:
+            st.markdown(f"[📖 Baca Selengkapnya]({b['link']})")
+
+        st.markdown("---")
+
+else:
+    st.info("Silakan pilih atau ketik kata kunci untuk mencari berita.")
