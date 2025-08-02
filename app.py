@@ -51,7 +51,7 @@ if keyword:
 
         # Gambar dari Unsplash berdasarkan isi judul
         img_url = generate_unsplash_url(b["title"])
-        st.image(img_url, use_column_width=True)
+        st.image(img_url, use_container_width=True)
 
         st.write(potong_isi(b["content"], max_kata=50))
 
