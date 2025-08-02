@@ -1,64 +1,58 @@
 import streamlit as st
 import json
-from collections import Counter
-import os
 import urllib.parse
+import requests
+import os
 
-# ==== Load data dari file JSON ====
+# === Konfigurasi Awal ===
 DATA_PATH = os.path.join("Data", "combined_articles.json")
+DEFAULT_IMAGE = "https://via.placeholder.com/800x400?text=Berita"
 
+# === Fungsi generate URL gambar dari Unsplash ===
+def generate_unsplash_url(title):
+    keyword = urllib.parse.quote(" ".join(title.lower().split()[:2]))
+    return f"https://source.unsplash.com/800x400/?{keyword},news"
+
+# === Fungsi validasi gambar ===
+def is_image_valid(url):
+    try:
+        response = requests.get(url, timeout=3)
+        return response.status_code == 200 and "image" in response.headers.get("Content-Type", "")
+    except:
+        return False
+
+# === Fungsi potong isi berita ===
+def potong_isi(teks, max_kata=40):
+    kata = teks.split()
+    return " ".join(kata[:max_kata]) + "..." if len(kata) > max_kata else teks
+
+# === Load data berita ===
 try:
     with open(DATA_PATH, "r", encoding="utf-8") as f:
         berita = json.load(f)
 except FileNotFoundError:
-    st.error(f"Gagal memuat data dari {DATA_PATH}. Pastikan file ada.")
+    st.error(f"❌ File tidak ditemukan: {DATA_PATH}")
     st.stop()
 
-# ==== Judul Aplikasi ====
+# === UI Streamlit ===
 st.title("📰 Pencarian Berita Online")
+keyword = st.text_input("🔍 Masukkan kata kunci berita").strip().lower()
 
-# ==== Ambil keyword populer dari judul ====
-semua_kata = []
-for b in berita:
-    semua_kata += b["title"].lower().split()
-
-top_kata = [k for k, _ in Counter(semua_kata).most_common(10) if len(k) > 3]
-
-# ==== UI Search ====
-saran = st.selectbox("💡 Pilih topik populer (opsional)", [""] + top_kata)
-keyword_input = st.text_input("🔍 Atau ketik kata kunci sendiri").strip().lower()
-keyword = keyword_input if keyword_input else saran
-
-def potong_isi(teks, max_kata=40):
-    kata = teks.split()
-    if len(kata) > max_kata:
-        return " ".join(kata[:max_kata]) + "..."
-    return teks
-
-def generate_unsplash_url(title):
-    # Ambil 1–2 kata pertama dari judul untuk dijadikan keyword pencarian gambar
-    keyword = " ".join(title.lower().split()[:2])
-    keyword = urllib.parse.quote(keyword)  # encode URL
-    return f"https://source.unsplash.com/800x400/?{keyword},news"
-
-# ==== Filter berita berdasarkan keyword ====
 if keyword:
     hasil = [b for b in berita if keyword in b["title"].lower() or keyword in b["content"].lower()]
-    st.markdown(f"### 🔎 {len(hasil)} hasil ditemukan untuk: `{keyword}`")
+    st.markdown(f"### Ditemukan {len(hasil)} berita untuk: `{keyword}`")
 
     for b in hasil:
         st.subheader(b["title"])
 
-        # Gambar dari Unsplash berdasarkan isi judul
+        # Ambil gambar dari Unsplash (berdasarkan judul)
         img_url = generate_unsplash_url(b["title"])
-        st.image(img_url, use_container_width=True)
+        if is_image_valid(img_url):
+            st.image(img_url, use_container_width=True)
+        else:
+            st.image(DEFAULT_IMAGE, use_container_width=True)
 
-        st.write(potong_isi(b["content"], max_kata=50))
-
-        if "link" in b:
-            st.markdown(f"[📖 Baca Selengkapnya]({b['link']})")
-
+        st.write(potong_isi(b["content"]))
         st.markdown("---")
-
 else:
-    st.info("Silakan pilih atau ketik kata kunci untuk mencari berita.")
+    st.info("Masukkan kata kunci untuk mulai mencari berita.")
