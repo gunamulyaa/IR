@@ -30,12 +30,12 @@ keyword = keyword_input if keyword_input else saran
 
 # ==== Filter berita berdasarkan keyword ====
 if keyword:
-    hasil = [b for b in berita if keyword in b["title"].lower() or keyword in b["isi"].lower()]
+    hasil = [b for b in berita if keyword in b["title"].lower() or keyword in b["content"].lower()]
     st.markdown(f"### 🔎 {len(hasil)} hasil ditemukan untuk: `{keyword}`")
 
     for b in hasil:
         st.subheader(b["title"])
-        st.write(b["isi"])
+        st.write(b["content"])
         if "link" in b:
             st.markdown(f"[Baca Selengkapnya]({b['link']})")
         st.markdown("---")
