@@ -28,6 +28,12 @@ saran = st.selectbox("💡 Pilih topik populer (opsional)", [""] + top_kata)
 keyword_input = st.text_input("🔍 Atau ketik kata kunci sendiri").strip().lower()
 keyword = keyword_input if keyword_input else saran
 
+def potong_isi(teks, max_kata=40):
+    kata = teks.split()
+    if len(kata) > max_kata:
+        return " ".join(kata[:max_kata]) + "..."
+    return teks
+
 # ==== Filter berita berdasarkan keyword ====
 if keyword:
     hasil = [b for b in berita if keyword in b["title"].lower() or keyword in b["content"].lower()]
@@ -35,7 +41,7 @@ if keyword:
 
     for b in hasil:
         st.subheader(b["title"])
-        st.write(b["content"])
+        st.write(potong_isi(b["content"]))
         if "link" in b:
             st.markdown(f"[Baca Selengkapnya]({b['link']})")
         st.markdown("---")
