@@ -2,6 +2,7 @@ import streamlit as st
 import json
 from collections import Counter
 import os
+import urllib.parse
 
 # ==== Load data dari file JSON ====
 DATA_PATH = os.path.join("Data", "combined_articles.json")
@@ -34,16 +35,23 @@ def potong_isi(teks, max_kata=40):
         return " ".join(kata[:max_kata]) + "..."
     return teks
 
-# ==== Filter berita berdasarkan keyword ====
-if keyword:
-    hasil = [b for b in berita if keyword in b["title"].lower() or keyword in b["content"].lower()]
-    st.markdown(f"### 🔎 {len(hasil)} hasil ditemukan untuk: `{keyword}`")
+def generate_unsplash_url(title):
+    # Ambil 1–2 kata pertama dari judul untuk dijadikan keyword pencarian gambar
+    keyword = " ".join(title.lower().split()[:2])
+    keyword = urllib.parse.quote(keyword)  # encode URL
+    return f"https://source.unsplash.com/800x400/?{keyword},news"
 
-    for b in hasil:
-        st.subheader(b["title"])
-        st.write(potong_isi(b["content"]))
-        if "link" in b:
-            st.markdown(f"[Baca Selengkapnya]({b['link']})")
-        st.markdown("---")
-else:
-    st.info("Silakan pilih atau ketik kata kunci untuk mencari berita.")
+# ==== Filter berita berdasarkan keyword ====
+for b in hasil:
+    st.subheader(b["title"])
+
+    # Gambar dari Unsplash berdasarkan isi judul
+    img_url = generate_unsplash_url(b["title"])
+    st.image(img_url, use_column_width=True)
+
+    st.write(potong_isi(b["content"]))
+
+    if "link" in b:
+        st.markdown(f"[📖 Baca Selengkapnya]({b['link']})")
+
+    st.markdown("---")
