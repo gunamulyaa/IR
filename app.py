@@ -4,7 +4,7 @@ from collections import Counter
 import os
 
 # ==== Load data dari file JSON ====
-DATA_PATH = os.path.join("Data", "combined_article.json")
+DATA_PATH = os.path.join("Data", "combined_articles.json")
 
 try:
     with open(DATA_PATH, "r", encoding="utf-8") as f:
