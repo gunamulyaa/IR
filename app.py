@@ -1,39 +1,56 @@
 import streamlit as st
-import json
-import urllib.parse
 import os
+from elasticsearch import Elasticsearch
+from steps.preprocessing import run_preprocessing
+from steps.embedding import run_embedding
+from steps.indexing import run_indexing
+from steps.retrieval import run_retrieval
 
-# === Path file JSON ===
-DATA_PATH = os.path.join("Data", "combined_articles.json")
+# File paths
+DATA_RAW = "Data/combined_articles.json"
+DATA_PREPROCESSED = "Data/preprocessed.json"
+DATA_EMBEDDED = "Data/embedded.json"
 
-# === Fungsi potong isi ===
-def potong_isi(teks, max_kata=40):
-    kata = teks.split()
-    return " ".join(kata[:max_kata]) + "..." if len(kata) > max_kata else teks
+# Elasticsearch config
+ES_HOST = os.getenv("ES_HOST", "http://localhost:9200")
+ES_USER = os.getenv("ES_USER", None)
+ES_PASS = os.getenv("ES_PASS", None)
 
-
-# === Load data JSON ===
-try:
-    with open(DATA_PATH, "r", encoding="utf-8") as f:
-        berita = json.load(f)
-except FileNotFoundError:
-    st.error(f"❌ File tidak ditemukan: {DATA_PATH}")
-    st.stop()
-
-# === UI Streamlit ===
-st.title("📰 Pencarian Berita")
-
-keyword = st.text_input("🔍 Masukkan kata kunci").strip().lower()
-
-if keyword:
-    hasil = [b for b in berita if keyword in b["title"].lower() or keyword in b["content"].lower()]
-    st.markdown(f"### Ditemukan {len(hasil)} berita untuk: `{keyword}`")
-
-    for b in hasil:
-        st.subheader(b["title"])
-
-
-        st.write(potong_isi(b["content"]))
-        st.markdown("---")
+# Connect to Elasticsearch
+if ES_USER and ES_PASS:
+    es = Elasticsearch(hosts=[ES_HOST], basic_auth=(ES_USER, ES_PASS))
 else:
-    st.info("Masukkan kata kunci untuk mulai mencari berita.")
+    es = Elasticsearch(hosts=[ES_HOST])
+
+# Run pipeline automatically once
+@st.cache_resource
+def init_pipeline():
+    if not os.path.exists(DATA_PREPROCESSED):
+        st.info("🔄 Menjalankan preprocessing...")
+        run_preprocessing(DATA_RAW, DATA_PREPROCESSED)
+
+    if not os.path.exists(DATA_EMBEDDED):
+        st.info("🔄 Membuat embedding...")
+        run_embedding(DATA_PREPROCESSED, DATA_EMBEDDED)
+
+    st.info("🔄 Indexing ke Elasticsearch...")
+    run_indexing(es, DATA_EMBEDDED)
+    st.success("✅ Pipeline selesai.")
+
+init_pipeline()
+
+# UI Search
+st.title("🔍 Pencarian Berita (Fokus Content)")
+query = st.text_input("Masukkan kata kunci / kalimat:")
+top_k = st.slider("Jumlah hasil", 1, 20, 5)
+
+if st.button("Cari") and query.strip():
+    results = run_retrieval(es, query, k=top_k)
+    if results:
+        for r in results:
+            st.markdown(f"### {r['title']}")
+            st.write(r['content'])
+            st.caption(f"Score: {r['score']:.4f}")
+            st.markdown("---")
+    else:
+        st.warning("Tidak ada hasil ditemukan.")
