@@ -22,14 +22,18 @@ if ES_USER and ES_PASS:
 else:
     es = Elasticsearch(hosts=[ES_HOST])
 
+
+def is_valid_json(path):
+    return os.path.exists(path) and os.path.getsize(path) > 0
+
 # Run pipeline automatically once
 @st.cache_resource
 def init_pipeline():
-    if not os.path.exists(DATA_PREPROCESSED):
+    if not is_valid_json(DATA_PREPROCESSED):
         st.info("🔄 Menjalankan preprocessing...")
         run_preprocessing(DATA_RAW, DATA_PREPROCESSED)
 
-    if not os.path.exists(DATA_EMBEDDED):
+    if not is_valid_json(DATA_EMBEDDED):
         st.info("🔄 Membuat embedding...")
         run_embedding(DATA_PREPROCESSED, DATA_EMBEDDED)
 
