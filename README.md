@@ -261,3 +261,7 @@ MIT.
 
 * Proyek ini dioptimalkan untuk **pengembangan lokal** (single-node ES, tanpa security).
   Untuk produksi: aktifkan security ES, atur shard/replica, dan siapkan pipeline ingest sesuai skala data Anda.
+
+
+## Aplikasi Awal 
+![Tangkapan layar aplikasi](screencapture.png)
